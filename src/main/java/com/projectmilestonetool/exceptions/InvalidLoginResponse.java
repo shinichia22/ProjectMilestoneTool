@@ -25,4 +25,3 @@ public class InvalidLoginResponse {
         this.password = password;
     }
 }
-

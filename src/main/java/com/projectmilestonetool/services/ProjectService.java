@@ -5,64 +5,90 @@ import org.springframework.stereotype.Service;
 
 import com.projectmilestonetool.entites.Backlog;
 import com.projectmilestonetool.entites.Project;
+import com.projectmilestonetool.entites.User;
 import com.projectmilestonetool.exceptions.ProjectIdException;
+import com.projectmilestonetool.exceptions.ProjectNotFoundException;
 import com.projectmilestonetool.repositories.BacklogRepository;
 import com.projectmilestonetool.repositories.ProjectRepository;
+import com.projectmilestonetool.repositories.UserRepository;
 
 @Service
 public class ProjectService {
 
 	@Autowired
 	private ProjectRepository projectRepository;
-	
+
 	@Autowired
 	private BacklogRepository backlogRepository;
 
-	public Project saveOrUpdateProject(Project project) {
+	@Autowired
+	private UserRepository userRepository;
+
+	public Project saveOrUpdateProject(Project project, String username) {
+
+		// this is to check if the right user should save or update the project.
+
+		if (project.getId() != null) {
+			Project existingProject = projectRepository.findByProjectIdentifier(project.getProjectIdentifier());
+			// if trying to update with different username and different project
+			if (existingProject != null && (!existingProject.getProjectLeader().equals(username))) {
+				throw new ProjectNotFoundException("Project not found in your account");
+			} else if (existingProject == null) {
+			// if same user but if doesn't exist
+				throw new ProjectNotFoundException("Project with id:'" + project.getProjectIdentifier()
+						+ "'cannot be update because it doesn't exist");
+			}
+		}
+
 		try {
+			User user = userRepository.findByUsername(username);
+			project.setUser(user);
+			project.setProjectLeader(user.getUsername());
 			project.setProjectIdentifier(project.getProjectIdentifier().toUpperCase());
-			
-			// if project is created then backlog should also get created.since it is happening for update we are checking if project id is null i.e new project.
-			if(project.getId() == 0L) {
+
+			if (project.getId() == null) {
 				Backlog backlog = new Backlog();
 				project.setBacklog(backlog);
 				backlog.setProject(project);
-				backlog.setProjectIdentifier(project.getProjectIdentifier().toUpperCase()); // to get right projectTask with right backlog/projectTask ids
+				backlog.setProjectIdentifier(project.getProjectIdentifier().toUpperCase());
 			}
-			// for updating we are getting backlog as null, to get the project's backlog we have to write below code
-			if(project.getId()!=0L) {
-				project.setBacklog(backlogRepository.findByProjectIdentifier(project.getProjectIdentifier().toUpperCase()));
+
+			if (project.getId() != null) {
+				project.setBacklog(
+						backlogRepository.findByProjectIdentifier(project.getProjectIdentifier().toUpperCase()));
 			}
-			
-			
-			
+
 			return projectRepository.save(project);
+
 		} catch (Exception e) {
 			throw new ProjectIdException(
-					"Project ID " + project.getProjectIdentifier().toUpperCase() + " already exist");
+					"Project ID '" + project.getProjectIdentifier().toUpperCase() + "' already exists");
 		}
 
 	}
 
-	public Project findBYProjectIdentifier(String projectId) {
-		Project project = projectRepository.findByprojectIdentifier(projectId.toUpperCase());
+	public Project findProjectByIdentifier(String projectId, String username) {
+
+		// Only want to return the project if the user looking for it is the owner
+
+		Project project = projectRepository.findByProjectIdentifier(projectId.toUpperCase());
 
 		if (project == null) {
-			throw new ProjectIdException("Project ID " + projectId.toUpperCase() + " doesn't exist");
+			throw new ProjectIdException("Project ID '" + projectId + "' does not exist");
 		}
+		if (!project.getProjectLeader().equals(username)) {
+			throw new ProjectNotFoundException("Project not found in your account");
+		}
+
 		return project;
 	}
-	
-	public Iterable<Project> findAllProjects(){
-		return projectRepository.findAll();
-	}
-	
-	public void deleteProjectBYIdentifier(String projectId) {
-		Project project = projectRepository.findByprojectIdentifier(projectId);
 
-		if (project == null) {
-			throw new ProjectIdException("Cannot Delete project with Id " + projectId.toUpperCase() + " This project doesn't exist");
-		}
-		projectRepository.delete(project);
+	public Iterable<Project> findAllProjects(String username) {
+		return projectRepository.findByProjectLeader(username);
 	}
+
+	public void deleteProjectByIdentifier(String projectId, String username) {
+		projectRepository.delete(findProjectByIdentifier(projectId, username));
+	}
+
 }

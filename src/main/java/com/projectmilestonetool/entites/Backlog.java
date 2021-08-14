@@ -1,92 +1,74 @@
 package com.projectmilestonetool.entites;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
+
+import javax.persistence.*;
 import java.util.ArrayList;
 import java.util.List;
 
-import javax.persistence.CascadeType;
-import javax.persistence.Entity;
-import javax.persistence.FetchType;
-import javax.persistence.GeneratedValue;
-import javax.persistence.GenerationType;
-import javax.persistence.Id;
-import javax.persistence.JoinColumn;
-import javax.persistence.OneToMany;
-import javax.persistence.OneToOne;
-
-import com.fasterxml.jackson.annotation.JsonIgnore;
-
 @Entity
 public class Backlog {
-	@Id
-	@GeneratedValue(strategy = GenerationType.IDENTITY)
-	private Long id;
-	private Integer PTSequence = 0;
-	private String projectIdentifier;
 
-	// OneToOne with project
-	@OneToOne(fetch = FetchType.EAGER)
-	@JoinColumn(name = "project_id", nullable = false)
-	@JsonIgnore // to avoid recursion of object creation loop
-	private Project project;
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    private Long id;
+    private Integer PTSequence = 0;
+    private String projectIdentifier;
 
-	// OneToMany with ProjectTask
-	//orphanremoval removes the one child entity from the list 
-	@OneToMany(cascade = CascadeType.REFRESH, mappedBy = "backlog", fetch = FetchType.EAGER, orphanRemoval = true)
-	private List<ProjectTask> projectTasks = new ArrayList<>();
-	
+    //OneToOne with project
+    @OneToOne(fetch = FetchType.EAGER)
+    @JoinColumn(name="project_id",nullable = false)
+    @JsonIgnore
+    private Project project;
 
-	public Backlog() {
 
-	}
+    @OneToMany(cascade = CascadeType.REFRESH, fetch = FetchType.EAGER, mappedBy = "backlog", orphanRemoval = true)
+    private List<ProjectTask> projectTasks = new ArrayList<>();
 
-	public Backlog(Long id, Integer pTSequence, String projectIdentifier) {
-		this.id = id;
-		PTSequence = pTSequence;
-		this.projectIdentifier = projectIdentifier;
-	}
 
-	public Long getId() {
-		return id;
-	}
 
-	public void setId(Long id) {
-		this.id = id;
-	}
+    public Backlog() {
+    }
 
-	public Integer getPTSequence() {
-		return PTSequence;
-	}
+    public Long getId() {
+        return id;
+    }
 
-	public void setPTSequence(Integer pTSequence) {
-		PTSequence = pTSequence;
-	}
+    public void setId(Long id) {
+        this.id = id;
+    }
 
-	public String getProjectIdentifier() {
-		return projectIdentifier;
-	}
+    public Integer getPTSequence() {
+        return PTSequence;
+    }
 
-	public void setProjectIdentifier(String projectIdentifier) {
-		this.projectIdentifier = projectIdentifier;
-	}
+    public void setPTSequence(Integer PTSequence) {
+        this.PTSequence = PTSequence;
+    }
 
-	public Project getProject() {
-		return project;
-	}
+    public String getProjectIdentifier() {
+        return projectIdentifier;
+    }
 
-	public void setProject(Project project) {
-		this.project = project;
-	}
+    public void setProjectIdentifier(String projectIdentifier) {
+        this.projectIdentifier = projectIdentifier;
+    }
 
-	public List<ProjectTask> getProjectTasks() {
-		return projectTasks;
-	}
+    public Project getProject() {
+        return project;
+    }
 
-	public void setProjectTasks(List<ProjectTask> projectTasks) {
-		this.projectTasks = projectTasks;
-	}
-	
-	
-	
-	
+    public void setProject(Project project) {
+        this.project = project;
+    }
+
+    public List<ProjectTask> getProjectTasks() {
+        return projectTasks;
+    }
+
+    public void setProjectTasks(List<ProjectTask> projectTasks) {
+        this.projectTasks = projectTasks;
+    }
+
 
 }

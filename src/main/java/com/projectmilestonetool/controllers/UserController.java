@@ -1,13 +1,5 @@
 package com.projectmilestonetool.controllers;
 
-import com.projectmilestonetool.entites.User;
-import com.projectmilestonetool.payload.JWTLoginSucessResponse;
-import com.projectmilestonetool.payload.LoginRequest;
-import com.projectmilestonetool.security.JwtTokenProvider;
-import com.projectmilestonetool.services.MapValidationErrorService;
-import com.projectmilestonetool.services.UserService;
-import com.projectmilestonetool.validators.UserValidator;
-
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -21,60 +13,63 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
-import static com.projectmilestonetool.security.SecurityConstants.TOKEN_PREFIX;
-
+import com.projectmilestonetool.entites.User;
+import com.projectmilestonetool.payload.JWTLoginSucessReponse;
+import com.projectmilestonetool.payload.LoginRequest;
+import com.projectmilestonetool.security.JwtTokenProvider;
+import com.projectmilestonetool.services.MapValidationErrorService;
+import com.projectmilestonetool.services.UserService;
+import com.projectmilestonetool.validators.UserValidator;
 
 import javax.validation.Valid;
+
+import static com.projectmilestonetool.security.SecurityConstants.TOKEN_PREFIX;
 
 @RestController
 @RequestMapping("/api/users")
 public class UserController {
 
-    @Autowired
-    private MapValidationErrorService mapValidationErrorService;
+	@Autowired
+	private MapValidationErrorService mapValidationErrorService;
 
-    @Autowired
-    private UserService userService;
+	@Autowired
+	private UserService userService;
 
-    @Autowired
-    private UserValidator userValidator;
+	@Autowired
+	private UserValidator userValidator;
 
-    @Autowired
-    private JwtTokenProvider tokenProvider;
+	@Autowired
+	private JwtTokenProvider tokenProvider;
 
-    @Autowired
-    private AuthenticationManager authenticationManager;
+	@Autowired
+	private AuthenticationManager authenticationManager;
 
+	@PostMapping("/login")
+	public ResponseEntity<?> authenticateUser(@Valid @RequestBody LoginRequest loginRequest, BindingResult result) {
+		ResponseEntity<?> errorMap = mapValidationErrorService.MapValidationService(result);
+		if (errorMap != null)
+			return errorMap;
 
+		Authentication authentication = authenticationManager.authenticate(
+				new UsernamePasswordAuthenticationToken(loginRequest.getUsername(), loginRequest.getPassword()));
 
-    @PostMapping("/login")
-    public ResponseEntity<?> authenticateUser(@Valid @RequestBody LoginRequest loginRequest, BindingResult result){
-        ResponseEntity<?> errorMap = mapValidationErrorService.mapValidationService(result);
-        if(errorMap != null) return errorMap;
+		SecurityContextHolder.getContext().setAuthentication(authentication);
+		String jwt = TOKEN_PREFIX + tokenProvider.generateToken(authentication);
 
-        Authentication authentication = authenticationManager.authenticate(
-                new UsernamePasswordAuthenticationToken(
-                        loginRequest.getUsername(),
-                        loginRequest.getPassword()
-                )
-        );
+		return ResponseEntity.ok(new JWTLoginSucessReponse(true, jwt));
+	}
 
-        SecurityContextHolder.getContext().setAuthentication(authentication);
-        String jwt = TOKEN_PREFIX +  tokenProvider.generateToken(authentication);
+	@PostMapping("/register")
+	public ResponseEntity<?> registerUser(@Valid @RequestBody User user, BindingResult result) {
+		// Validate passwords match
+		userValidator.validate(user, result);
 
-        return ResponseEntity.ok(new JWTLoginSucessResponse(true, jwt));
-    }
+		ResponseEntity<?> errorMap = mapValidationErrorService.MapValidationService(result);
+		if (errorMap != null)
+			return errorMap;
 
-    @PostMapping("/register")
-    public ResponseEntity<?> registerUser(@Valid @RequestBody User user, BindingResult result){
-        // Validate passwords match
-        userValidator.validate(user,result);
+		User newUser = userService.saveUser(user);
 
-        ResponseEntity<?> errorMap = mapValidationErrorService.mapValidationService(result);
-        if(errorMap != null)return errorMap;
-
-        User newUser = userService.saveUser(user);
-
-        return  new ResponseEntity<User>(newUser, HttpStatus.CREATED);
-    }
+		return new ResponseEntity<User>(newUser, HttpStatus.CREATED);
+	}
 }

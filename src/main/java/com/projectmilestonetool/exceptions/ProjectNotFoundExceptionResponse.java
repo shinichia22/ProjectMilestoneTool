@@ -1,19 +1,18 @@
 package com.projectmilestonetool.exceptions;
 
 public class ProjectNotFoundExceptionResponse {
-	private String projectNotFound;
 
-	public ProjectNotFoundExceptionResponse(String projectNotFound) {
-		this.projectNotFound = projectNotFound;
-	}
+    private String ProjectNotFound;
 
-	public String getProjectNotFound() {
-		return projectNotFound;
-	}
+    public ProjectNotFoundExceptionResponse(String projectNotFound) {
+        ProjectNotFound = projectNotFound;
+    }
 
-	public void setProjectNotFound(String projectNotFound) {
-		this.projectNotFound = projectNotFound;
-	}
-	
-	
+    public String getProjectNotFound() {
+        return ProjectNotFound;
+    }
+
+    public void setProjectNotFound(String projectNotFound) {
+        ProjectNotFound = projectNotFound;
+    }
 }
