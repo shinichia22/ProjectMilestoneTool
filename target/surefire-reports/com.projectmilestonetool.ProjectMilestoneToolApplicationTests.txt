@@ -1,0 +1,4 @@
+-------------------------------------------------------------------------------
+Test set: com.projectmilestonetool.ProjectMilestoneToolApplicationTests
+-------------------------------------------------------------------------------
+Tests run: 1, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 18.006 s - in com.projectmilestonetool.ProjectMilestoneToolApplicationTests
